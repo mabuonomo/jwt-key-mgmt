@@ -32,7 +32,7 @@ class JWKAnalyzerTest extends TestCase
         $key = JWKFactory::createNoneKey();
         $messages = $this->getKeyAnalyzer()->analyze($key);
 
-        self::assertNotEmpty($messages);
+        static::assertNotEmpty($messages);
     }
 
     /**
@@ -42,13 +42,13 @@ class JWKAnalyzerTest extends TestCase
     {
         $key = JWK::create([
             'kty' => 'RSA',
-            'n'   => 'oaAQyGUwgwCfZQym0QQCeCJu6GfApv6nQBKJ3MgzT85kCUO3xDiudiDbJqgqn2ol',
-            'e'   => 'AQAB',
-            'd'   => 'asuBS2jRbT50FCkP8PxdRVQ7RIWJ3s5UWAi-c233cQam1kRjGN2QzAv79hrpjLQB',
+            'n' => 'oaAQyGUwgwCfZQym0QQCeCJu6GfApv6nQBKJ3MgzT85kCUO3xDiudiDbJqgqn2ol',
+            'e' => 'AQAB',
+            'd' => 'asuBS2jRbT50FCkP8PxdRVQ7RIWJ3s5UWAi-c233cQam1kRjGN2QzAv79hrpjLQB',
         ]);
         $messages = $this->getKeyAnalyzer()->analyze($key);
 
-        self::assertNotEmpty($messages);
+        static::assertNotEmpty($messages);
     }
 
     /**
@@ -59,7 +59,7 @@ class JWKAnalyzerTest extends TestCase
         $key = JWKFactory::createOctKey(16, ['use' => 'foo', 'key_ops' => 'foo']);
         $messages = $this->getKeyAnalyzer()->analyze($key);
 
-        self::assertNotEmpty($messages);
+        static::assertNotEmpty($messages);
     }
 
     /**
@@ -67,9 +67,6 @@ class JWKAnalyzerTest extends TestCase
      */
     private $keyAnalyzerManager;
 
-    /**
-     * @return KeyAnalyzer\KeyAnalyzerManager
-     */
     private function getKeyAnalyzer(): KeyAnalyzer\KeyAnalyzerManager
     {
         if (null === $this->keyAnalyzerManager) {

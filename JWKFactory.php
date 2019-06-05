@@ -19,13 +19,22 @@ use Jose\Component\Core\JWKSet;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\KeyManagement\KeyConverter\KeyConverter;
 use Jose\Component\KeyManagement\KeyConverter\RSAKey;
+use Symfony\Component\Cache\CacheItem;
+use Symfony\Component\Cache\Simple\FilesystemCache;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 class JWKFactory
 {
+
+    /**
+     *
+     */
+    static private $cache;
+
     /**
      * Creates a RSA key with the given key size and additional values.
      *
-     * @param int   $size   The key size in bits
+     * @param int $size The key size in bits
      * @param array $values values to configure the key
      */
     public static function createRSAKey(int $size, array $values = []): JWK
@@ -55,8 +64,8 @@ class JWKFactory
     /**
      * Creates a EC key with the given curve and additional values.
      *
-     * @param string $curve  The curve
-     * @param array  $values values to configure the key
+     * @param string $curve The curve
+     * @param array $values values to configure the key
      */
     public static function createECKey(string $curve, array $values = []): JWK
     {
@@ -141,7 +150,7 @@ class JWKFactory
     /**
      * Creates a octet key with the given key size and additional values.
      *
-     * @param int   $size   The key size in bits
+     * @param int $size The key size in bits
      * @param array $values values to configure the key
      */
     public static function createOctKey(int $size, array $values = []): JWK
@@ -163,8 +172,8 @@ class JWKFactory
     /**
      * Creates a OKP key with the given curve and additional values.
      *
-     * @param string $curve  The curve
-     * @param array  $values values to configure the key
+     * @param string $curve The curve
+     * @param array $values values to configure the key
      */
     public static function createOKPKey(string $curve, array $values = []): JWK
     {
@@ -240,20 +249,49 @@ class JWKFactory
 
     private static function getContent($file, $url, $hours = 24)
     {
-        if (\file_exists($file)) {
-            $current_time = \time();
-            $expire_time = $hours * 60 * 60;
-            $file_time = \filemtime($file);
-            if ($current_time - $expire_time < $file_time) {
-                return \file_get_contents($file);
-            }
+        $cache = new FilesystemAdapter(
+
+        // a string used as the subdirectory of the root cache directory, where cache
+        // items will be stored
+            $namespace = 'jwt',
+
+            // the default lifetime (in seconds) for cache items that do not define their
+            // own lifetime, with a value 0 causing items to be stored indefinitely (i.e.
+            // until the files are deleted)
+            $defaultLifetime = 0,
+
+            // the main cache directory (the application needs read-write permissions on it)
+            // if none is specified, a directory is created inside the system temporary directory
+            $directory = '/tmp'
+        );
+
+        /** @var CacheItem $item */
+        $item = $cache->getItem('jwks');
+        if (!$item->isHit()) {
+            $item->set(\file_get_contents($url));
+            $cache->save($item);
         }
 
-        $content = \file_get_contents($url);
-        \file_put_contents($file, $content);
-
-        return $content;
+        return $item->get();
     }
+
+
+
+
+//        if (\file_exists($file)) {
+//            $current_time = \time();
+//            $expire_time = $hours * 60 * 60;
+//            $file_time = \filemtime($file);
+//            if ($current_time - $expire_time < $file_time) {
+//                return \file_get_contents($file);
+//            }
+//        }
+//
+//        $content = \file_get_contents($url);
+//        \file_put_contents($file, $content);
+//
+//        return $content;
+//}
 
     /**
      * Creates a key or key set from the given input.

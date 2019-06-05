@@ -226,12 +226,33 @@ class JWKFactory
      */
     public static function createFromJsonObject(string $value)
     {
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            $value = self::getContent('/tmp/openid_jwk_set', $value);
+        }
+
         $json = \json_decode($value, true);
         if (!\is_array($json)) {
             throw new \InvalidArgumentException('Invalid key or key set.');
         }
 
         return self::createFromValues($json);
+    }
+
+    private static function getContent($file, $url, $hours = 24)
+    {
+        if (\file_exists($file)) {
+            $current_time = \time();
+            $expire_time = $hours * 60 * 60;
+            $file_time = \filemtime($file);
+            if ($current_time - $expire_time < $file_time) {
+                return \file_get_contents($file);
+            }
+        }
+
+        $content = \file_get_contents($url);
+        \file_put_contents($file, $content);
+
+        return $content;
     }
 
     /**

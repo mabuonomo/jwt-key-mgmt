@@ -1,0 +1,8 @@
+version: '3.2'
+services:
+  php:
+    container_name: jwt_php
+    image: gitlab.facile.it:4567/utilities/php-fpm/dev:latest
+    volumes:
+      - ./:/var/www/app
+    working_dir: /var/www/app

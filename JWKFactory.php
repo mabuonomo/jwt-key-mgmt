@@ -236,7 +236,7 @@ class JWKFactory
     public static function createFromJsonObject(string $value)
     {
         if (filter_var($value, FILTER_VALIDATE_URL)) {
-            $value = self::getContent('/tmp/openid_jwk_set', $value);
+            $value = self::getContent($value);
         }
 
         $json = \json_decode($value, true);
@@ -247,51 +247,20 @@ class JWKFactory
         return self::createFromValues($json);
     }
 
-    private static function getContent($file, $url, $hours = 24)
+    private static function getContent($url)
     {
-        $cache = new FilesystemAdapter(
-
-        // a string used as the subdirectory of the root cache directory, where cache
-        // items will be stored
-            $namespace = 'jwt',
-
-            // the default lifetime (in seconds) for cache items that do not define their
-            // own lifetime, with a value 0 causing items to be stored indefinitely (i.e.
-            // until the files are deleted)
-            $defaultLifetime = 0,
-
-            // the main cache directory (the application needs read-write permissions on it)
-            // if none is specified, a directory is created inside the system temporary directory
-            $directory = '/tmp'
-        );
+        $cache = new FilesystemAdapter($namespace = 'jwt');
 
         /** @var CacheItem $item */
         $item = $cache->getItem('jwks');
         if (!$item->isHit()) {
             $item->set(\file_get_contents($url));
+            $item->expiresAt(new \DateTime('tomorrow midnight'));
             $cache->save($item);
         }
 
         return $item->get();
     }
-
-
-
-
-//        if (\file_exists($file)) {
-//            $current_time = \time();
-//            $expire_time = $hours * 60 * 60;
-//            $file_time = \filemtime($file);
-//            if ($current_time - $expire_time < $file_time) {
-//                return \file_get_contents($file);
-//            }
-//        }
-//
-//        $content = \file_get_contents($url);
-//        \file_put_contents($file, $content);
-//
-//        return $content;
-//}
 
     /**
      * Creates a key or key set from the given input.

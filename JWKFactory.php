@@ -260,7 +260,7 @@ class JWKFactory
                 if (strpos($status, '200') === false) {
                     return self::getFallbackKeys();
                 }
-                $item->set(\file_get_contents($url . 'sd'));
+                $item->set(\file_get_contents($url));
                 $item->expiresAt(new \DateTime('tomorrow midnight'));
                 $cache->save($item);
             }

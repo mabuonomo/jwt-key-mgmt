@@ -249,17 +249,34 @@ class JWKFactory
 
     private static function getContent($url)
     {
-        $cache = new FilesystemAdapter($namespace = 'jwt');
+        try {
+            $cache = new FilesystemAdapter($namespace = 'jwt');
 
-        /** @var CacheItem $item */
-        $item = $cache->getItem('jwks');
-        if (!$item->isHit()) {
-            $item->set(\file_get_contents($url));
-            $item->expiresAt(new \DateTime('tomorrow midnight'));
-            $cache->save($item);
+            /** @var CacheItem $item */
+            $item = $cache->getItem('jwks');
+            if (!$item->isHit()) {
+                // check if the url is reachable
+                [$status] = get_headers($url);
+                if (strpos($status, '200') === false) {
+                    return self::getFallbackKeys();
+                }
+                $item->set(\file_get_contents($url . 'sd'));
+                $item->expiresAt(new \DateTime('tomorrow midnight'));
+                $cache->save($item);
+            }
+
+            return $item->get();
+        } catch (\Exception $ex) {
+            return self::getFallbackKeys();
         }
+    }
 
-        return $item->get();
+    /**
+     * @return string
+     */
+    private static function getFallbackKeys(): string
+    {
+        return '{"keys":[{"kty":""}]}';
     }
 
     /**
